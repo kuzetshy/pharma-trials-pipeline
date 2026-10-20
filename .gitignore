@@ -1,10 +1,34 @@
-cat << 'EOF' > .gitignore
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+
+# Environment variables & secrets
 .env
-data/
+!.env.example
+
+# Raw & processed data (keep directory structure via .gitkeep)
+data/bronze/*
+!data/bronze/.gitkeep
+data/silver/*
+!data/silver/.gitkeep
+data/gold/*
+!data/gold/.gitkeep
 *.parquet
-.DS_Store
+*.duckdb
+
+# Testing & Coverage
 .pytest_cache/
-EOF
+.coverage
+htmlcov/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
