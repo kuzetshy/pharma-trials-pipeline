@@ -32,3 +32,8 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+# Session handover & local notes
+HANDOVER.md
+*handover*.md
+
