@@ -119,3 +119,52 @@ def test_get_trial_detail_success_and_not_found(client: TestClient) -> None:
     missing_resp = client.get("/api/v1/trials/NCT99999999")
     assert missing_resp.status_code == 404
     assert "not found" in missing_resp.json()["detail"].lower()
+
+
+def test_summarize_trial_endpoint_success_and_not_found(client: TestClient) -> None:
+    """GenAI summarize endpoint should return structured protocol summary or 404."""
+    # Retrieve an existing trial ID
+    list_resp = client.get("/api/v1/trials?limit=1")
+    trials = list_resp.json().get("items", [])
+
+    if trials:
+        nct_id = trials[0]["nct_id"]
+        resp = client.post(f"/api/v1/trials/{nct_id}/summarize")
+        assert resp.status_code == 200
+        summary = resp.json()
+        assert summary["nct_id"] == nct_id
+        assert "mechanism_of_action" in summary
+        assert "target_population" in summary
+        assert isinstance(summary["primary_endpoints"], list)
+        assert isinstance(summary["key_risks"], list)
+        assert "model_name" in summary
+
+    # Non-existent trial should return 404
+    missing_resp = client.post("/api/v1/trials/NCT99999999/summarize")
+    assert missing_resp.status_code == 404
+    assert "not found in silver repository" in missing_resp.json()["detail"].lower()
+
+
+def test_summarize_trial_endpoint_service_error(client: TestClient) -> None:
+    """GenAI summarize endpoint should return 502 if upstream summarizer fails."""
+    from unittest.mock import MagicMock
+    from src.api.routers.trials import get_summarizer_service
+    from src.genai.summarizer import ClinicalProtocolSummarizer, GenAIServiceError
+
+    list_resp = client.get("/api/v1/trials?limit=1")
+    trials = list_resp.json().get("items", [])
+
+    if trials:
+        nct_id = trials[0]["nct_id"]
+
+        mock_summarizer = MagicMock(spec=ClinicalProtocolSummarizer)
+        mock_summarizer.summarize_trial.side_effect = GenAIServiceError("Simulated LLM API quota exhaustion")
+
+        app.dependency_overrides[get_summarizer_service] = lambda: mock_summarizer
+        try:
+            resp = client.post(f"/api/v1/trials/{nct_id}/summarize")
+            assert resp.status_code == 502
+            assert "GenAI summarization service failed" in resp.json()["detail"]
+        finally:
+            app.dependency_overrides.pop(get_summarizer_service, None)
+

@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.api.schemas import PaginatedResponse, TrialDetailOut, TrialSummaryOut
 from src.api.service import DataService
+from src.genai.schemas import ClinicalSummaryOut
+from src.genai.summarizer import ClinicalProtocolSummarizer, GenAIServiceError, get_summarizer
 from src.utils.config import settings
 
 router = APIRouter(prefix="/api/v1/trials", tags=["Clinical Trials (Silver)"])
@@ -11,6 +13,10 @@ router = APIRouter(prefix="/api/v1/trials", tags=["Clinical Trials (Silver)"])
 
 def get_data_service() -> DataService:
     return DataService(config=settings)
+
+
+def get_summarizer_service() -> ClinicalProtocolSummarizer:
+    return get_summarizer(settings)
 
 
 @router.get(
@@ -54,3 +60,31 @@ def get_trial_detail(
             detail=f"Clinical trial '{nct_id}' not found in Silver repository",
         )
     return TrialDetailOut(**trial)
+
+
+@router.post(
+    "/{nct_id}/summarize",
+    response_model=ClinicalSummaryOut,
+    summary="Generate Structured Clinical Protocol Summary via GenAI",
+    status_code=status.HTTP_200_OK,
+)
+def summarize_trial_protocol(
+    nct_id: str,
+    data_service: DataService = Depends(get_data_service),
+    summarizer: ClinicalProtocolSummarizer = Depends(get_summarizer_service),
+) -> ClinicalSummaryOut:
+    """Extract and synthesize mechanism of action, target population, and endpoints using GenAI."""
+    trial = data_service.get_trial_detail(nct_id)
+    if not trial:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Clinical trial '{nct_id}' not found in Silver repository to summarize",
+        )
+    try:
+        return summarizer.summarize_trial(trial)
+    except GenAIServiceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"GenAI summarization service failed: {exc}",
+        ) from exc
+
