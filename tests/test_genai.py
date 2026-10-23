@@ -1,10 +1,21 @@
-"""Unit tests for GenAI schemas and structured protocol models."""
+"""Unit tests for GenAI schemas, providers, and protocol summarizer service."""
 
 from datetime import datetime, timezone
+import json
+from unittest.mock import MagicMock
+import httpx
 import pytest
 from pydantic import ValidationError
 
 from src.genai.schemas import ClinicalSummaryOut
+from src.genai.summarizer import (
+    ClinicalProtocolSummarizer,
+    GeminiLLMProvider,
+    GenAIServiceError,
+    MockLLMProvider,
+    get_summarizer,
+)
+from src.utils.config import Settings
 
 
 def test_clinical_summary_out_valid_creation():
@@ -105,3 +116,164 @@ def test_clinical_summary_json_roundtrip():
     assert reconstructed.mechanism_of_action == original.mechanism_of_action
     assert reconstructed.primary_endpoints == original.primary_endpoints
     assert reconstructed.key_risks == original.key_risks
+
+
+# ==============================================================================
+# Service & Provider Tests
+# ==============================================================================
+
+
+def test_mock_llm_provider_antibody_synthesis():
+    """Verify MockLLMProvider detects antibody interventions and tailors the summary."""
+    provider = MockLLMProvider()
+    result = provider.generate_summary(
+        nct_id="NCT01234567",
+        study_title="Trastuzumab trial in HER2+ Breast Cancer",
+        brief_summary="Evaluating trastuzumab in combination with pertuzumab.",
+        detailed_description="Full protocol details...",
+        conditions=["Breast Neoplasms", "HER2-Positive"],
+        interventions=[{"intervention_name": "Trastuzumab", "intervention_type": "DRUG"}],
+    )
+
+    assert result.nct_id == "NCT01234567"
+    assert "monoclonal antibody" in result.mechanism_of_action.lower()
+    assert "Breast Neoplasms" in result.target_population
+    assert len(result.primary_endpoints) >= 1
+    assert len(result.key_risks) >= 1
+    assert result.model_name == "mock-clinical-v1"
+
+
+def test_mock_llm_provider_inhibitor_synthesis():
+    """Verify MockLLMProvider detects small-molecule kinase inhibitors."""
+    provider = MockLLMProvider()
+    result = provider.generate_summary(
+        nct_id="NCT05555555",
+        study_title="Olaparib in BRCA Mutated Ovarian Cancer",
+        brief_summary="PARP inhibitor study.",
+        detailed_description=None,
+        conditions=["Ovarian Cancer"],
+        interventions=[{"intervention_name": "Olaparib inhibitor", "intervention_type": "DRUG"}],
+    )
+
+    assert result.nct_id == "NCT05555555"
+    assert "kinase" in result.mechanism_of_action.lower() or "inhibitor" in result.mechanism_of_action.lower()
+    assert "Ovarian Cancer" in result.target_population
+
+
+def test_summarizer_service_flow():
+    """Verify ClinicalProtocolSummarizer unpacks trial dict and calls provider."""
+    provider = MockLLMProvider()
+    summarizer = ClinicalProtocolSummarizer(provider=provider)
+
+    trial_data = {
+        "nct_id": "NCT08888888",
+        "official_title": "Phase 3 Study of Pembrolizumab",
+        "brief_summary": "Immunotherapy for melanoma",
+        "detailed_description": "Extended protocol...",
+        "conditions": ["Melanoma"],
+        "interventions": [{"intervention_name": "Pembrolizumab"}],
+    }
+
+    summary = summarizer.summarize_trial(trial_data)
+    assert summary.nct_id == "NCT08888888"
+    assert summary.study_title == "Phase 3 Study of Pembrolizumab"
+    assert "Melanoma" in summary.target_population
+
+
+def test_summarizer_service_missing_nct_id():
+    """Verify that summarizing a trial record without nct_id raises GenAIServiceError."""
+    summarizer = ClinicalProtocolSummarizer(provider=MockLLMProvider())
+    with pytest.raises(GenAIServiceError) as exc_info:
+        summarizer.summarize_trial({"brief_title": "Trial without ID"})
+    assert "missing required 'nct_id'" in str(exc_info.value)
+
+
+def test_gemini_provider_requires_api_key():
+    """Verify that initializing GeminiLLMProvider without key raises GenAIServiceError."""
+    with pytest.raises(GenAIServiceError):
+        GeminiLLMProvider(api_key="")
+
+
+def test_gemini_provider_successful_mocked_http():
+    """Verify GeminiLLMProvider parses valid Gemini API JSON response."""
+    mock_http_client = MagicMock(spec=httpx.Client)
+    
+    # Fake Gemini API response structure
+    gemini_payload = {
+        "candidates": [
+            {
+                "content": {
+                    "parts": [
+                        {
+                            "text": json.dumps({
+                                "nct_id": "NCT01234567",
+                                "study_title": "Gemini Trial",
+                                "mechanism_of_action": "CDK4/6 inhibitor blocking cell cycle progression",
+                                "target_population": "Postmenopausal women with HR+/HER2- breast cancer",
+                                "primary_endpoints": ["Progression-free survival"],
+                                "key_risks": ["Neutropenia", "Infections"],
+                                "design_summary": "Phase 3 double-blind randomized",
+                                "model_name": "gemini-1.5-flash",
+                                "generated_at": "2026-10-23T12:00:00Z"
+                            })
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.status_code = 200
+    mock_response.json.return_value = gemini_payload
+    mock_http_client.post.return_value = mock_response
+
+    provider = GeminiLLMProvider(
+        api_key="test-api-key-12345",
+        model_name="gemini-1.5-flash",
+        http_client=mock_http_client,
+    )
+
+    result = provider.generate_summary(
+        nct_id="NCT01234567",
+        study_title="Gemini Trial",
+        brief_summary="Summary",
+        detailed_description="Details",
+    )
+
+    assert result.nct_id == "NCT01234567"
+    assert "CDK4/6" in result.mechanism_of_action
+    assert mock_http_client.post.called
+
+
+def test_gemini_provider_http_error():
+    """Verify GeminiLLMProvider handles HTTP error codes gracefully."""
+    mock_http_client = MagicMock(spec=httpx.Client)
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.status_code = 429
+    mock_response.text = "Quota exceeded"
+    mock_http_client.post.return_value = mock_response
+
+    provider = GeminiLLMProvider(api_key="valid-key", http_client=mock_http_client)
+
+    with pytest.raises(GenAIServiceError) as exc_info:
+        provider.generate_summary(nct_id="NCT01234567", study_title="Test", brief_summary=None, detailed_description=None)
+    assert "error 429" in str(exc_info.value)
+
+
+def test_get_summarizer_factory():
+    """Verify factory returns appropriate provider based on settings."""
+    # 1. Default settings -> Mock provider
+    cfg_mock = Settings(llm_provider="mock")
+    summarizer_mock = get_summarizer(cfg_mock)
+    assert isinstance(summarizer_mock.provider, MockLLMProvider)
+
+    # 2. Gemini setting with empty key -> Fallback to Mock provider
+    cfg_fallback = Settings(llm_provider="gemini", llm_api_key=None)
+    summarizer_fallback = get_summarizer(cfg_fallback)
+    assert isinstance(summarizer_fallback.provider, MockLLMProvider)
+
+    # 3. Gemini setting with key -> GeminiLLMProvider
+    cfg_gemini = Settings(llm_provider="gemini", llm_api_key="fake-key")
+    summarizer_gemini = get_summarizer(cfg_gemini)
+    assert isinstance(summarizer_gemini.provider, GeminiLLMProvider)

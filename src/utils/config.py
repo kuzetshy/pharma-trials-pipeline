@@ -68,6 +68,21 @@ class Settings(BaseSettings):
         description="Gold layer directory for dimensional models and marts",
     )
 
+    # GenAI & LLM Configuration
+    llm_provider: str = Field(
+        default="mock",
+        description="LLM provider: 'mock' (offline testing) or 'gemini' (live API)",
+    )
+    llm_api_key: str | None = Field(
+        default=None,
+        description="API key for cloud LLM provider",
+    )
+    llm_model_name: str = Field(
+        default="gemini-1.5-flash",
+        description="Target LLM model identifier",
+    )
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
