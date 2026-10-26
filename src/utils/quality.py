@@ -10,6 +10,7 @@ Executes automated data integrity contracts directly on Parquet files using Duck
 
 from dataclasses import dataclass, field
 from pathlib import Path
+
 import duckdb
 
 from src.utils.logger import setup_logger

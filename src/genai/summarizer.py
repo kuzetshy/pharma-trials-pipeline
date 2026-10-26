@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any, Protocol, runtime_checkable
+
 import httpx
 from pydantic import ValidationError
 
@@ -52,7 +53,7 @@ class MockLLMProvider:
     ) -> ClinicalSummaryOut:
         """Produce deterministic, structured clinical synthesis based on trial metadata."""
         cond_str = ", ".join(conditions) if conditions else "Unspecified indication"
-        
+
         # Extract intervention names
         int_names: list[str] = []
         if interventions:
@@ -142,7 +143,7 @@ class GeminiLLMProvider:
         )
 
         url = f"{self.BASE_URL}/{self.model_name}:generateContent?key={self.api_key}"
-        
+
         request_body = {
             "contents": [
                 {

@@ -1,8 +1,9 @@
 """Unit tests for GenAI schemas, providers, and protocol summarizer service."""
 
-from datetime import datetime, timezone
 import json
+from datetime import datetime
 from unittest.mock import MagicMock
+
 import httpx
 import pytest
 from pydantic import ValidationError
@@ -197,7 +198,7 @@ def test_gemini_provider_requires_api_key():
 def test_gemini_provider_successful_mocked_http():
     """Verify GeminiLLMProvider parses valid Gemini API JSON response."""
     mock_http_client = MagicMock(spec=httpx.Client)
-    
+
     # Fake Gemini API response structure
     gemini_payload = {
         "candidates": [

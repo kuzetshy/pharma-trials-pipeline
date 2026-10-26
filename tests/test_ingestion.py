@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import httpx
 import pytest
 
 from src.ingestion.fetch_trials import (
@@ -55,7 +54,7 @@ def test_save_bronze_batch(tmp_path: Path) -> None:
     assert saved_path.name.startswith("trials_")
     assert saved_path.name.endswith("_batch_01.json")
 
-    with open(saved_path, "r", encoding="utf-8") as f:
+    with open(saved_path, encoding="utf-8") as f:
         data = json.load(f)
 
     assert data["metadata"]["condition"] == "Breast Cancer"

@@ -4,7 +4,6 @@ import pytest
 from starlette.testclient import TestClient
 
 from src.api.main import app
-from src.utils.config import settings
 
 
 @pytest.fixture(scope="module")
@@ -148,6 +147,7 @@ def test_summarize_trial_endpoint_success_and_not_found(client: TestClient) -> N
 def test_summarize_trial_endpoint_service_error(client: TestClient) -> None:
     """GenAI summarize endpoint should return 502 if upstream summarizer fails."""
     from unittest.mock import MagicMock
+
     from src.api.routers.trials import get_summarizer_service
     from src.genai.summarizer import ClinicalProtocolSummarizer, GenAIServiceError
 

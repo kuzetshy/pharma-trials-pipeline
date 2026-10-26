@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from src.api.schemas import HealthCheckOut, QualityGateStatusOut
 from src.api.service import DataService
-from src.utils.config import Settings, settings
+from src.utils.config import settings
 from src.utils.quality import validate_gold_layer, validate_silver_layer
 
 router = APIRouter(tags=["System & Quality"])

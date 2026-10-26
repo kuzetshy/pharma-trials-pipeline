@@ -1,6 +1,7 @@
 """Pydantic schemas (DTOs) for FastAPI endpoints."""
 
 from typing import Any, Generic, TypeVar
+
 from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")

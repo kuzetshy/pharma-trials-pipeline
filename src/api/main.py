@@ -4,8 +4,8 @@ Provides Data-as-a-Service access to Bronze, Silver, and Gold Parquet layers,
 Data Quality Gate reporting, and Analytical Marts.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +19,7 @@ logger = setup_logger("pharma_api")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Startup and shutdown lifecycle handler."""
     logger.info("Initializing PharmaInsight API...")
     settings.ensure_directories()

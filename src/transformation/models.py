@@ -7,8 +7,8 @@ Defines schemas for:
 - ParsedStudy (aggregated container of validated study records)
 """
 
-from datetime import datetime, timezone
 import re
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -201,7 +201,7 @@ def parse_raw_study(raw_study: dict[str, Any], processed_at: str | None = None) 
     # 7. Results Flag
     has_results = bool(raw_study.get("hasResults", False))
 
-    now_utc = processed_at or datetime.now(timezone.utc).isoformat()
+    now_utc = processed_at or datetime.now(UTC).isoformat()
 
     try:
         trial = CleanTrial(

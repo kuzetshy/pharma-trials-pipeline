@@ -1,7 +1,7 @@
 """Data access layer for querying Silver and Gold Parquet layers via DuckDB."""
 
-from pathlib import Path
 from typing import Any
+
 import duckdb
 
 from src.utils.config import Settings, settings

@@ -5,10 +5,10 @@ rate limiting, and stores raw JSON batches in data/bronze/.
 """
 
 import argparse
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import time
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -161,7 +161,7 @@ def save_bronze_batch(
         Path to the saved JSON batch file.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date_str = datetime.now(UTC).strftime("%Y%m%d")
     filename = f"trials_{date_str}_batch_{batch_index:02d}.json"
     target_path = output_dir / filename
 
@@ -255,7 +255,7 @@ def run_ingestion(
 
             metadata = {
                 "batch_index": batch_index,
-                "ingested_at_utc": datetime.now(timezone.utc).isoformat(),
+                "ingested_at_utc": datetime.now(UTC).isoformat(),
                 "search_condition": target_condition,
                 "page_size": target_page_size,
                 "studies_in_batch": len(studies),

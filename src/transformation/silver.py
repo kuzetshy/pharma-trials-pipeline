@@ -6,8 +6,8 @@ clean analytical datasets as Parquet files into data/silver/.
 """
 
 import argparse
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -107,12 +107,12 @@ def load_bronze_records(
     interventions_records: list[dict[str, Any]] = []
 
     total_raw = 0
-    now_utc = datetime.now(timezone.utc).isoformat()
+    now_utc = datetime.now(UTC).isoformat()
 
     for file_path in json_files:
         logger.debug("Reading Bronze batch: %s", file_path.name)
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 payload = json.load(f)
         except Exception as exc:
             logger.error("Failed to read JSON from %s: %s", file_path, exc)

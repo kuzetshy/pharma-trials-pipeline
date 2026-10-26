@@ -1,11 +1,11 @@
 """Unit and integration tests for Data Quality assertions and validation gates."""
 
 from pathlib import Path
+
 import duckdb
 import pytest
 
 from src.utils.quality import (
-    DataQualityError,
     DataQualityValidator,
     validate_gold_layer,
     validate_silver_layer,

@@ -1,7 +1,8 @@
 """Pydantic schemas for GenAI clinical protocol summarization and structured extraction."""
 
-from datetime import datetime, timezone
 import re
+from datetime import UTC, datetime
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -67,7 +68,7 @@ class ClinicalSummaryOut(BaseModel):
         description="Name and version of the LLM model/engine that generated this extraction"
     )
     generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="UTC timestamp when the structured protocol summary was generated"
     )
 

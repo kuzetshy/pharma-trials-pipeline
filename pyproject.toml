@@ -1,0 +1,37 @@
+[project]
+name = "pharma-trials-pipeline"
+version = "1.0.0"
+description = "Clinical Trials Medallion ELT, GenAI Protocol Summarizer & REST Data-as-a-Service Platform"
+readme = "README.md"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter / long SQL strings)
+    "B008",  # do not perform function calls in argument defaults (FastAPI Depends idiom)
+    "B904",  # raise ... from err
+    "B905",  # zip() without an explicit strict= parameter
+    "UP046", # Generic class uses Generic subclass instead of type parameters (Pydantic v2 syntax)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

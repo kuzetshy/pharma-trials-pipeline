@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import duckdb
-import pytest
 
 from src.transformation.gold import run_gold_transformation
 from src.utils.config import Settings
