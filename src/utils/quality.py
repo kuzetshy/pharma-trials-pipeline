@@ -81,6 +81,14 @@ class DataQualityValidator:
     def check_primary_key(self, parquet_path: Path, pk_column: str) -> QualityCheckResult:
         """Verify that primary key column has zero duplicates and zero nulls."""
         target_name = parquet_path.name
+        if not parquet_path.exists():
+            return QualityCheckResult(
+                check_name="primary_key_uniqueness",
+                target_artifact=target_name,
+                passed=False,
+                details=f"Artifact {parquet_path} does not exist.",
+            )
+
         sql = f"""
         SELECT
             COUNT(*) AS total_rows,
@@ -107,6 +115,14 @@ class DataQualityValidator:
     def check_not_null(self, parquet_path: Path, columns: list[str]) -> QualityCheckResult:
         """Verify that specified columns contain no NULL values."""
         target_name = parquet_path.name
+        if not parquet_path.exists():
+            return QualityCheckResult(
+                check_name="not_null_columns",
+                target_artifact=target_name,
+                passed=False,
+                details=f"Artifact {parquet_path} does not exist.",
+            )
+
         failed_cols: list[str] = []
 
         for col in columns:
@@ -131,6 +147,14 @@ class DataQualityValidator:
     ) -> QualityCheckResult:
         """Verify Foreign Key integrity (no orphaned records in child table)."""
         target_name = f"{child_path.name} -> {parent_path.name}"
+        if not child_path.exists() or not parent_path.exists():
+            return QualityCheckResult(
+                check_name="referential_integrity",
+                target_artifact=target_name,
+                passed=False,
+                details=f"Missing artifacts for integrity check: {child_path.name} exists={child_path.exists()}, {parent_path.name} exists={parent_path.exists()}",
+            )
+
         sql = f"""
         SELECT COUNT(*)
         FROM '{child_path.as_posix()}' c
@@ -149,6 +173,14 @@ class DataQualityValidator:
     def check_percentage_bounds(self, parquet_path: Path, pct_column: str) -> QualityCheckResult:
         """Verify percentage values stay strictly within [0.0, 100.0] or are NULL."""
         target_name = parquet_path.name
+        if not parquet_path.exists():
+            return QualityCheckResult(
+                check_name="percentage_bounds",
+                target_artifact=target_name,
+                passed=False,
+                details=f"Artifact {parquet_path} does not exist.",
+            )
+
         sql = f"""
         SELECT COUNT(*)
         FROM '{parquet_path.as_posix()}'
@@ -166,6 +198,14 @@ class DataQualityValidator:
     def check_non_negative(self, parquet_path: Path, columns: list[str]) -> QualityCheckResult:
         """Verify that numeric metric columns contain no negative values."""
         target_name = parquet_path.name
+        if not parquet_path.exists():
+            return QualityCheckResult(
+                check_name="non_negative_metrics",
+                target_artifact=target_name,
+                passed=False,
+                details=f"Artifact {parquet_path} does not exist.",
+            )
+
         failed_cols: list[str] = []
 
         for col in columns:
