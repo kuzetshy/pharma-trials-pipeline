@@ -1,0 +1,63 @@
+# ==============================================================================
+# PharmaInsight Multi-Container Compose Specification
+# ==============================================================================
+# Usage:
+#   1. Run REST API:
+#      docker compose up --build -d api
+#   2. Inspect API logs:
+#      docker compose logs -f api
+#   3. Run ELT Data Pipeline on-demand:
+#      docker compose run --rm pipeline
+# ==============================================================================
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pharma-trials-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/data
+      - BRONZE_DIR=/app/data/bronze
+      - SILVER_DIR=/app/data/silver
+      - GOLD_DIR=/app/data/gold
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gemini-1.5-flash}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pharma-trials-pipeline
+    profiles:
+      - tools
+    command: ["python", "run_pipeline.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/data
+      - BRONZE_DIR=/app/data/bronze
+      - SILVER_DIR=/app/data/silver
+      - GOLD_DIR=/app/data/gold
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
