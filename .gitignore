@@ -1,39 +1,109 @@
-# Virtual environments
+# ==============================================================================
+# Security & Secrets (CRITICAL: Never commit to GitHub)
+# ==============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*service_account*.json
+*client_secret*.json
+credentials.json
+token.json
+*.kdbx
+
+# ==============================================================================
+# Virtual Environments & Packaging
+# ==============================================================================
 .venv/
 venv/
 env/
+ENV/
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
 
-# Python cache
+# ==============================================================================
+# Python Runtime & Caches
+# ==============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# Environment variables & secrets
-.env
-!.env.example
-
-# Raw & processed data (keep directory structure via .gitkeep)
+# ==============================================================================
+# Data & Database Artifacts (Large files, clinical data & temporary writes)
+# ==============================================================================
 data/bronze/*
 !data/bronze/.gitkeep
 data/silver/*
 !data/silver/.gitkeep
 data/gold/*
 !data/gold/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
 *.parquet
 *.duckdb
+*.db
+*.sqlite
+*.sqlite3
+*.arrow
+*.feather
+*.tmp
+*.temp
+*.part
 
-# Testing & Coverage
+# ==============================================================================
+# Logs & Diagnostics (Can inadvertently leak URLs, auth tokens or stack traces)
+# ==============================================================================
+*.log
+logs/
+run_*.log
+
+# ==============================================================================
+# Testing, Coverage & Linters
+# ==============================================================================
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
+coverage.xml
 htmlcov/
 
-# IDE & OS
+# ==============================================================================
+# Jupyter Notebooks & Scratchpads
+# ==============================================================================
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ==============================================================================
+# IDEs & Operating Systems
+# ==============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 .vscode/
 .idea/
-.DS_Store
+.cursor/
+*.swp
+*.swo
+*~
 
-# Session handover & local notes
+# ==============================================================================
+# Session Handover & Local Working Notes
+# ==============================================================================
 HANDOVER.md
 *handover*.md
+
 
