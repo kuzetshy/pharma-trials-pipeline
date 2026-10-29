@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from src.dashboard.api_client import ApiClientError, PharmaApiClient
+from src.dashboard.api_client import ApiClientError, PharmaApiClient, normalize_api_url
 from src.dashboard.visuals import (
     plot_drug_landscape,
     plot_phase_distribution,
@@ -18,6 +18,16 @@ from src.dashboard.visuals import (
 @pytest.fixture
 def api_client() -> PharmaApiClient:
     return PharmaApiClient(base_url="http://testserver:8000")
+
+
+def test_normalize_api_url() -> None:
+    assert normalize_api_url(None) == "http://localhost:8000"
+    assert normalize_api_url("") == "http://localhost:8000"
+    assert normalize_api_url("http://custom:8000/") == "http://custom:8000"
+    assert normalize_api_url("https://api.example.com") == "https://api.example.com"
+    assert normalize_api_url("pharma-trials-api") == "https://pharma-trials-api.onrender.com"
+    assert normalize_api_url("pharma-trials-api.onrender.com") == "https://pharma-trials-api.onrender.com"
+    assert normalize_api_url("localhost:8000") == "http://localhost:8000"
 
 
 # --- API CLIENT TESTS ---

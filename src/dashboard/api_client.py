@@ -10,11 +10,27 @@ class ApiClientError(Exception):
     """Exception raised for API communication failures."""
 
 
+def normalize_api_url(url: str | None) -> str:
+    """Ensure API URL has a valid protocol and scheme for httpx communication."""
+    if not url:
+        return "http://localhost:8000"
+    url = url.strip().rstrip("/")
+    if not url.startswith(("http://", "https://")):
+        if "onrender.com" in url:
+            url = f"https://{url}"
+        elif ":" in url or url in ("localhost", "127.0.0.1"):
+            url = f"http://{url}"
+        else:
+            url = f"https://{url}.onrender.com"
+    return url
+
+
 class PharmaApiClient:
     """Synchronous HTTP client for PharmaInsight REST API."""
 
     def __init__(self, base_url: str | None = None, timeout_seconds: float = 20.0) -> None:
-        self.base_url = (base_url or os.getenv("API_URL", "http://localhost:8000")).rstrip("/")
+        raw_url = base_url or os.getenv("API_URL", "http://localhost:8000")
+        self.base_url = normalize_api_url(raw_url)
         self.timeout_seconds = timeout_seconds
 
     def _get_client(self) -> httpx.Client:
