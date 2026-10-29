@@ -1,0 +1,60 @@
+# ==============================================================================
+# PharmaInsight Render Blueprint (Infrastructure-as-Code)
+# ==============================================================================
+# Deploys the decoupled Data-as-a-Service architecture:
+# 1. pharma-trials-api: FastAPI REST backend (Data Marts, Parquet, GenAI Copilot)
+# 2. pharma-trials-dashboard: Streamlit Visual Analytics & Explorer
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # REST API Service (FastAPI + DuckDB + Parquet)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: pharma-trials-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DATA_DIR
+        value: /app/data
+      - key: BRONZE_DIR
+        value: /app/data/bronze
+      - key: SILVER_DIR
+        value: /app/data/silver
+      - key: GOLD_DIR
+        value: /app/data/gold
+      - key: LLM_PROVIDER
+        value: mock
+      - key: LLM_MODEL_NAME
+        value: gemini-1.5-flash
+      - key: LLM_API_KEY
+        sync: false
+
+  # ----------------------------------------------------------------------------
+  # Visual Analytics Dashboard (Streamlit + Plotly)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: pharma-trials-dashboard
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerCommand: streamlit run src/dashboard/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: API_URL
+        fromService:
+          type: web
+          name: pharma-trials-api
+          property: host
+      - key: PUBLIC_API_URL
+        fromService:
+          type: web
+          name: pharma-trials-api
+          property: host

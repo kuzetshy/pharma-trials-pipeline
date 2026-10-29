@@ -52,10 +52,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
     GOLD_DIR=/app/data/gold \
     LLM_PROVIDER=mock
 
-# Copy application source code and seed data
+# Copy application source code, seed data, and operational scripts
 COPY src/ /app/src/
 COPY run_pipeline.py /app/run_pipeline.py
 COPY data/ /app/data/
+COPY scripts/ /app/scripts/
 
 # Set ownership to unprivileged user
 RUN chown -R appuser:appuser /app
