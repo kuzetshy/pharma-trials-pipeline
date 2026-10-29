@@ -2,11 +2,13 @@
 # PharmaInsight Multi-Container Compose Specification
 # ==============================================================================
 # Usage:
-#   1. Run REST API:
+#   1. Run full stack (REST API + Streamlit Dashboard):
+#      docker compose up --build -d
+#   2. Run only REST API:
 #      docker compose up --build -d api
-#   2. Inspect API logs:
-#      docker compose logs -f api
-#   3. Run ELT Data Pipeline on-demand:
+#   3. Run only Dashboard:
+#      docker compose up --build -d dashboard
+#   4. Run ELT Data Pipeline on-demand:
 #      docker compose run --rm pipeline
 # ==============================================================================
 
@@ -39,6 +41,28 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pharma-trials-dashboard
+    restart: unless-stopped
+    command: [
+      "streamlit", "run", "src/dashboard/app.py",
+      "--server.port=8501",
+      "--server.address=0.0.0.0",
+      "--server.headless=true",
+      "--browser.serverAddress=localhost"
+    ]
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
 
   pipeline:
     build:
