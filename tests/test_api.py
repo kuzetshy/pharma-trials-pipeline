@@ -1,7 +1,7 @@
 """Unit and integration tests for FastAPI REST service."""
 
 import pytest
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 
 from src.api.main import app
 

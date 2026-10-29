@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# PharmaInsight Pre-commit Guard: Secrets & Data Leak Prevention
+# ==============================================================================
+
+# 1. Block staging of .env files (except .env.example)
+staged_env=$(git diff --cached --name-only | grep -E '^\.env(\..+)?$' | grep -v '^\.env\.example$' || true)
+if [ -n "$staged_env" ]; then
+    echo "❌ [SECURITY ERROR] Attempting to commit environment file(s):"
+    echo "$staged_env"
+    echo "Secrets must never be committed to Git. Unstage using: git restore --staged <file>"
+    exit 1
+fi
+
+# 2. Block staging of large data / binary files (> 25MB)
+limit=26214400 # 25 MB
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+    if [ -f "$file" ]; then
+        size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo 0)
+        if [ "$size" -gt "$limit" ]; then
+            echo "❌ [DATA SAFETY ERROR] File '$file' is $(($size / 1048576))MB (limit is 25MB)."
+            echo "Large Parquet/DuckDB data files must not be pushed to GitHub."
+            exit 1
+        fi
+    fi
+done
+
+# 3. Block obvious API keys or private keys in diff
+if git diff --cached | grep -E -q 'AIza[0-9A-Za-z_-]{35}|sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY-----'; then
+    echo "❌ [SECURITY ERROR] Detected API key, Cloud credential or private key signature in staged diff!"
+    exit 1
+fi
+
+exit 0
