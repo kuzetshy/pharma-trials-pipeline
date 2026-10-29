@@ -60,6 +60,11 @@ data/processed/*
 *.temp
 *.part
 
+# Whitelist versioned seed sample data for zero-friction Cloud deployment / CI demo
+!data/seeds/
+!data/seeds/**
+!data/seeds/**/*.parquet
+
 # ==============================================================================
 # Logs & Diagnostics (Can inadvertently leak URLs, auth tokens or stack traces)
 # ==============================================================================

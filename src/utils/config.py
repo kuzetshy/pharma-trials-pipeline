@@ -68,6 +68,10 @@ class Settings(BaseSettings):
         default=Path("data/gold"),
         description="Gold layer directory for dimensional models and marts",
     )
+    seeds_dir: Path = Field(
+        default=Path("data/seeds"),
+        description="Seed directory containing bootstrap Parquet files for cold-start demo",
+    )
 
     # GenAI & LLM Configuration
     llm_provider: str = Field(
@@ -92,7 +96,7 @@ class Settings(BaseSettings):
 
     def ensure_directories(self) -> None:
         """Create storage directories if they do not exist."""
-        for path in (self.data_dir, self.bronze_dir, self.silver_dir, self.gold_dir):
+        for path in (self.data_dir, self.bronze_dir, self.silver_dir, self.gold_dir, self.seeds_dir):
             path.mkdir(parents=True, exist_ok=True)
 
 

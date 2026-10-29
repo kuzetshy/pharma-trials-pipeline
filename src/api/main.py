@@ -14,6 +14,7 @@ from fastapi.responses import RedirectResponse
 from src.api.routers import analytics, system, trials
 from src.utils.config import settings
 from src.utils.logger import setup_logger
+from src.utils.seed import seed_data_if_empty
 
 logger = setup_logger("pharma_api")
 
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Startup and shutdown lifecycle handler."""
     logger.info("Initializing PharmaInsight API...")
     settings.ensure_directories()
+    seed_data_if_empty(config=settings)
     logger.info("Storage directories verified: Bronze, Silver, Gold.")
     yield
     logger.info("Shutting down PharmaInsight API.")
