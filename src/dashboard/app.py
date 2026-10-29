@@ -28,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS styling for modern biotechnology aesthetics
+# Custom CSS styling for modern biotechnology aesthetics (adaptive dark/light theming)
 st.markdown(
     """
     <style>
@@ -38,14 +38,31 @@ st.markdown(
         color: #0284c7;
         margin-bottom: 0.2rem;
     }
+    @media (prefers-color-scheme: dark) {
+        .main-title {
+            color: #38bdf8;
+        }
+    }
     .sub-title {
         font-size: 1.05rem;
-        color: #64748b;
+        color: inherit;
+        opacity: 0.78;
         margin-bottom: 1.5rem;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+    }
+    .sidebar-sub-title {
+        font-size: 0.88rem;
+        color: inherit;
+        opacity: 0.78;
+        margin-top: -0.6rem;
+        margin-bottom: 1.1rem;
+        line-height: 1.45;
+        font-weight: 400;
     }
     .kpi-card {
         background-color: rgba(2, 132, 199, 0.06);
-        border: 1px solid rgba(2, 132, 199, 0.2);
+        border: 1px solid rgba(56, 189, 248, 0.25);
         border-radius: 8px;
         padding: 1rem;
         text-align: center;
@@ -55,9 +72,15 @@ st.markdown(
         font-weight: 700;
         color: #0284c7;
     }
+    @media (prefers-color-scheme: dark) {
+        .kpi-value {
+            color: #38bdf8;
+        }
+    }
     .kpi-label {
         font-size: 0.85rem;
-        color: #64748b;
+        color: inherit;
+        opacity: 0.75;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
@@ -67,16 +90,21 @@ st.markdown(
         margin: 0.15rem;
         border-radius: 12px;
         background-color: rgba(14, 165, 233, 0.12);
-        color: #0369a1;
+        color: #0284c7;
         font-size: 0.8rem;
         font-weight: 600;
     }
+    @media (prefers-color-scheme: dark) {
+        .badge-pill {
+            color: #38bdf8;
+        }
+    }
     .card-box {
-        border: 1px solid rgba(128, 128, 128, 0.2);
+        border: 1px solid rgba(148, 163, 184, 0.25);
         border-radius: 8px;
         padding: 1.2rem;
         margin-bottom: 1rem;
-        background-color: rgba(255, 255, 255, 0.02);
+        background-color: rgba(128, 128, 128, 0.03);
     }
     </style>
     """,
@@ -92,16 +120,30 @@ def get_api_client(base_url: str) -> PharmaApiClient:
 
 # --- SIDEBAR CONFIGURATION ---
 default_api_url = os.getenv("API_URL", "http://localhost:8000")
-st.sidebar.markdown("### 🔬 PharmaInsight Platform")
-st.sidebar.caption("Clinical Trials Medallion ELT, DuckDB & GenAI")
+public_api_url = os.getenv("PUBLIC_API_URL", "http://localhost:8000")
 
-api_url_input = st.sidebar.text_input("Backend REST API URL", value=default_api_url)
-client = get_api_client(api_url_input)
+st.sidebar.markdown("### 🔬 PharmaInsight Platform")
+st.sidebar.markdown(
+    '<div class="sidebar-sub-title">Clinical Trials Medallion ELT, DuckDB & GenAI</div>',
+    unsafe_allow_html=True,
+)
+
+with st.sidebar.expander("⚙️ Network Configuration", expanded=False):
+    api_url_input = st.text_input("Internal REST API URL", value=default_api_url)
+    st.caption(f"Host Swagger Docs: [{public_api_url}/docs]({public_api_url}/docs)")
+
+client = get_api_client(api_url_input if "api_url_input" in locals() else default_api_url)
 
 # Check API health
 is_connected = client.is_alive()
 if is_connected:
     st.sidebar.success("🟢 API Service Connected")
+    st.sidebar.link_button(
+        "⚡ Open FastAPI Swagger Docs",
+        url=f"{public_api_url}/docs",
+        help="Open interactive API documentation in your browser",
+        width="stretch",
+    )
     try:
         health_data = client.get_health()
         marts_ok = sum(1 for v in health_data.get("marts_available", {}).values() if v)
@@ -116,9 +158,10 @@ if is_connected:
             q_status = client.get_quality_status()
             silver_ok = q_status.get("silver_gate", {}).get("passed", False)
             gold_ok = q_status.get("gold_gate", {}).get("passed", False)
+            overall_ok = silver_ok and gold_ok
             st.markdown(f"**Silver Contracts**: {'✅ Passed' if silver_ok else '❌ Failed'}")
             st.markdown(f"**Gold Mart Contracts**: {'✅ Passed' if gold_ok else '❌ Failed'}")
-            st.caption(f"Overall Gate Verdict: **{q_status.get('status')}**")
+            st.markdown(f"**Overall Gate Verdict**: {'✅ Passed' if overall_ok else '❌ Failed'}")
         except ApiClientError:
             st.caption("Quality gate status not reachable.")
 else:

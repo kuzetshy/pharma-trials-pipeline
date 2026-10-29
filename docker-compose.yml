@@ -60,6 +60,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - API_URL=http://api:8000
+      - PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./src:/app/src:ro
     depends_on:
       api:
         condition: service_healthy
