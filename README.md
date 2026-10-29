@@ -17,7 +17,7 @@
 
 **An enterprise-grade Clinical Intelligence Platform demonstrating end-to-end Data Engineering, Data-as-a-Service architecture, and GenAI protocol synthesis on 320+ oncology clinical trials.**
 
-[🚀 Live Dashboard](https://pharma-trials-dashboard.onrender.com) • [⚡ Interactive Swagger API Docs](https://pharma-trials-api.onrender.com/docs) • [Architecture](#-end-to-end-architecture) • [Quickstart](#-quickstart) • [CV Highlights](#-resume--portfolio-bullet-points)
+[🚀 Live Dashboard](https://pharma-trials-dashboard.onrender.com) • [⚡ Interactive Swagger API Docs](https://pharma-trials-api.onrender.com/docs) • [Architecture](#-end-to-end-architecture) • [Quickstart](#-quickstart) • [API Showcase](#-rest-api--curl-showcase)
 
 </div>
 
@@ -353,23 +353,6 @@ pharma-trials-pipeline/
 ├── render.yaml                  # Render Blueprint Infrastructure-as-Code specification
 └── requirements.txt             # Production runtime dependencies
 ```
-
----
-
-## 💼 Resume / Portfolio Bullet Points
-
-Copy-pasteable impact statements tailored for technical resumes and LinkedIn profiles:
-
-### For **Senior Data Engineer** Roles:
-* *Architected and deployed a production-grade **Medallion Lakehouse (Bronze $\rightarrow$ Silver $\rightarrow$ Gold)** processing 320+ oncology protocols from ClinicalTrials.gov with automated window deduplication in DuckDB.*
-* *Eliminated Pandas runtime overhead by implementing a zero-Pandas analytics engine utilizing **DuckDB in-process OLAP** over **ZSTD-compressed Parquet**, achieving sub-second queries with near-zero memory footprint.*
-* *Engineered an automated **Data Contracts Gate** enforcing 11 relational and statistical integrity assertions (PK uniqueness, FK referential integrity, range bounds) prior to gold mart publishing.*
-* *Designed a zero-friction bootstrap seeding mechanism (~184 KB Parquet) integrated into FastAPI's lifespan, eliminating cold-start storage failures on containerized cloud deployments.*
-
-### For **Python Backend / AI Engineer** Roles:
-* *Developed an asynchronous **Data-as-a-Service REST API on FastAPI**, executing analytical SQL aggregations directly over Parquet files with automatic Swagger documentation and healthcheck telemetry.*
-* *Engineered a **GenAI Clinical Protocol Copilot** powered by Google Gemini 1.5 Flash using Pydantic DTOs for strict JSON Schema Structured Outputs to synthesize mechanisms of action, endpoints, and risk profiles.*
-* *Implemented enterprise DevOps and security standards: multi-stage non-root Docker builds (UID 10001), automated CI/CD via GitHub Actions (66 tests in ~1.5s), and pre-commit secret leak prevention.*
 
 ---
 
