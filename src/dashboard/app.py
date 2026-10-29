@@ -147,9 +147,9 @@ if is_connected:
     try:
         health_data = client.get_health()
         marts_ok = sum(1 for v in health_data.get("marts_available", {}).values() if v)
-        st.sidebar.markdown(f"**Data Marts Available**: `{marts_ok} / 3`")
-        st.sidebar.markdown(f"**Bronze Batches**: `{health_data.get('bronze_files_count', 0)}`")
-        st.sidebar.markdown(f"**Silver Trials**: `{health_data.get('silver_trials_count', 0):,}`")
+        st.sidebar.markdown(f"**Bronze Layer (Raw Batches)**: `{health_data.get('bronze_files_count', 0)}`")
+        st.sidebar.markdown(f"**Silver Layer (Cleansed Trials)**: `{health_data.get('silver_trials_count', 0):,}`")
+        st.sidebar.markdown(f"**Gold Layer (Analytical Marts)**: `{marts_ok} / 3`")
     except ApiClientError:
         pass
 
